@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
@@ -69,13 +70,34 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _tagRead() {
     NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Card'),
-          content: Text('Card data is ${json.encode(tag.data)}'),
-        ),
-      );
+      Uint8List com = Uint8List.fromList([
+        0x00,
+        0xA4,
+        0x04,
+        0x00,
+        0x7A,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x41,
+        0x01,
+        0x00,
+        0x0
+      ]);
+      Uint8List? res = await IsoDep.from(tag)?.transceive(data: com);
+      print(res);
+      if (res != null) {
+        var toPass = [...res].sublist(0, res.length - 2);
+        utf8.decode(toPass);
+      }
+      // showDialog(
+      //   context: context,
+      //   builder: (ctx) => AlertDialog(
+      //     title: const Text('Card'),
+      //     content: Text('Card data is ${json.encode(tag.data)}'),
+      //   ),
+      // );
       // MifareClassic.from(tag)
       NfcManager.instance.stopSession();
     });
