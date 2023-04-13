@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -88,16 +89,35 @@ class _MyHomePageState extends State<MyHomePage> {
       Uint8List? res = await IsoDep.from(tag)?.transceive(data: com);
       print(res);
       if (res != null) {
-        var toPass = [...res].sublist(0, res.length - 2);
-        utf8.decode(toPass);
+        for (int sfi = 1; sfi < 10; ++sfi) {
+          for (int record = 1; record < 10; ++record) {
+            Uint8List cmd =
+                Uint8List.fromList([0x00, 0xB2, 0x00, 0x00, 0x04, 0x00]);
+            cmd[2] = (record & 0x0FF).toUnsigned(8);
+            cmd[3] |= ((sfi << 3) & 0x0F8).toUnsigned(8);
+            res = await IsoDep.from(tag)?.transceive(data: cmd);
+            if ((res != null) && (res.length >= 2)) {
+              if (res[res.length - 2] == 0x90.toUnsigned(8) &&
+                  res.last == 0x00.toUnsigned(8)) {
+                // file exists and contains data
+                // byte[] data = Arrays.CopyOf(result, result.Length - 2);
+                Uint8List toParse =
+                    Uint8List.fromList([...res].sublist(0, res.length - 2));
+                print(utf8.decode(toParse));
+                // TODO: parse data
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Card'),
+                    content: Text('Card data is ${utf8.decode(toParse)}'),
+                  ),
+                );
+              }
+            }
+          }
+        }
       }
-      // showDialog(
-      //   context: context,
-      //   builder: (ctx) => AlertDialog(
-      //     title: const Text('Card'),
-      //     content: Text('Card data is ${json.encode(tag.data)}'),
-      //   ),
-      // );
+
       // MifareClassic.from(tag)
       NfcManager.instance.stopSession();
     });
