@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: const Text('Card'),
-                    content: Text('Card data is ${utf8.decode(toParse)}'),
+                    content: Text('Card data is ${String.fromCharCodes(toParse)}'),
                   ),
                 );
                 break;
