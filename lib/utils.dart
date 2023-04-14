@@ -831,7 +831,7 @@ class EmvUtils {
                     (d) => d['rawValue'].contains('$tag$lenhex$newVal'))['tag'],
             'rawValue': newVal,
             'decodedValue': RegExp(
-                        r'name|country|sex|language|currency|nationality',
+                        r'name|sex|label|language|currency|nationality',
                         caseSensitive: false)
                     .hasMatch(desc)
                 ? () {
