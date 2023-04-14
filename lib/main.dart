@@ -93,7 +93,13 @@ class _MyHomePageState extends State<MyHomePage> {
       Uint8List? res = await isodep?.transceive(data: com);
       print(res);
       if (res != null) {
-        print(EmvUtils.decode([...res].sublist(0, res.length - 2)));
+        var dres = EmvUtils.decode([...res].sublist(0, res.length - 2));
+        for (var e in dres) {
+          print(e);
+          print(e['description']);
+          print(e['rawValue']);
+          print(e['decodedValue']);
+        }
         for (int sfi = 1; sfi <= 31; sfi++) {
           for (int record = 1; record <= 16; record++) {
             Uint8List cmd =
@@ -107,7 +113,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 // byte[] data = Arrays.CopyOf(result, result.Length - 2);
                 Uint8List toParse =
                     Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
-                print(EmvUtils.decode(toParse));
+                for (var t in EmvUtils.decode(toParse)) {
+                  print(t);
+                  print(t['description']);
+                  print(t['rawValue']);
+                  print(t['decodedValue']);
+                }
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
