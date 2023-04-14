@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ffi';
 import 'dart:typed_data';
 
+import 'package:asn1lib/asn1lib.dart';
 import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager/platform_tags.dart';
@@ -105,6 +106,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 Uint8List toParse =
                     Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
                 print(String.fromCharCodes(toParse));
+                var p = ASN1Parser(toParse);
+                var s = p.nextObject();
+                print(String.fromCharCodes(s.encodedBytes));
                 // TODO: parse data
                 showDialog(
                   context: context,
