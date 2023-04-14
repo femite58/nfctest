@@ -84,6 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
         0x03,
         0x10,
         0x10,
+        0x00,
       ]);
       IsoDep? isodep = IsoDep.from(tag);
       Uint8List? res = await isodep?.transceive(data: com);
