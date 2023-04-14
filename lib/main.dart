@@ -76,33 +76,34 @@ class _MyHomePageState extends State<MyHomePage> {
         0xA4,
         0x04,
         0x00,
-        0x7A,
+        0xA0,
         0x00,
         0x00,
         0x00,
+        0x03,
+        0x10,
+        0x10,
         0x00,
-        0x41,
-        0x01,
+        0x90,
         0x00,
-        0x0
       ]);
-      Uint8List? res = await IsoDep.from(tag)?.transceive(data: com);
+      IsoDep? isodep = IsoDep.from(tag);
+      Uint8List? res = await isodep?.transceive(data: com);
       print(res);
       if (res != null) {
-        for (int sfi = 1; sfi < 10; ++sfi) {
-          for (int record = 1; record < 10; ++record) {
+        print(utf8.decode(res));
+        for (int sfi = 1; sfi <= 31; sfi++) {
+          for (int record = 1; record <= 16; record++) {
             Uint8List cmd =
-                Uint8List.fromList([0x00, 0xB2, 0x00, 0x00, 0x04, 0x00]);
-            cmd[2] = (record & 0x0FF).toUnsigned(8);
-            cmd[3] |= ((sfi << 3) & 0x0F8).toUnsigned(8);
-            res = await IsoDep.from(tag)?.transceive(data: cmd);
-            if ((res != null) && (res.length >= 2)) {
-              if (res[res.length - 2] == 0x90.toUnsigned(8) &&
-                  res.last == 0x00.toUnsigned(8)) {
+                Uint8List.fromList([0x00, 0xB2, record, (sfi << 3) | 4, 0x00]);
+            Uint8List? tlv = await isodep?.transceive(data: cmd);
+            if ((tlv != null) && (tlv.length >= 2)) {
+              if (tlv[tlv.length - 2] == 0x90.toUnsigned(8) &&
+                  tlv.last == 0x00.toUnsigned(8)) {
                 // file exists and contains data
                 // byte[] data = Arrays.CopyOf(result, result.Length - 2);
                 Uint8List toParse =
-                    Uint8List.fromList([...res].sublist(0, res.length - 2));
+                    Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
                 print(utf8.decode(toParse));
                 // TODO: parse data
                 showDialog(
