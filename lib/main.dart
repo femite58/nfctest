@@ -90,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
       Uint8List? res = await isodep?.transceive(data: com);
       print(res);
       if (res != null) {
-        print(utf8.decode([...res].sublist(0, res.length - 2)));
+        // print(utf8.decode([...res].sublist(0, res.length - 2)));
         for (int sfi = 1; sfi <= 31; sfi++) {
           for (int record = 1; record <= 16; record++) {
             Uint8List cmd =
