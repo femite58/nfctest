@@ -95,7 +95,7 @@ class _MyHomePageState extends State<MyHomePage> {
       if (res != null) {
         var dres = EmvUtils.decode([...res].sublist(0, res.length - 2));
         for (var e in dres) {
-          print(e);
+          // print(e);
           print(e['description']);
           print(e['rawValue']);
           print(e['decodedValue']);
@@ -114,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Uint8List toParse =
                     Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
                 for (var t in EmvUtils.decode(toParse)) {
-                  print(t);
+                  // print(t);
                   print(t['description']);
                   print(t['rawValue']);
                   print(t['decodedValue']);
