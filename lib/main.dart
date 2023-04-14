@@ -90,12 +90,13 @@ class _MyHomePageState extends State<MyHomePage> {
       Uint8List? res = await isodep?.transceive(data: com);
       print(res);
       if (res != null) {
-        // print(utf8.decode([...res].sublist(0, res.length - 2)));
+        print(String.fromCharCodes([...res].sublist(0, res.length - 2)));
         for (int sfi = 1; sfi <= 31; sfi++) {
           for (int record = 1; record <= 16; record++) {
             Uint8List cmd =
                 Uint8List.fromList([0x00, 0xB2, record, (sfi << 3) | 4, 0x00]);
             Uint8List? tlv = await isodep?.transceive(data: cmd);
+            print(tlv);
             if ((tlv != null) && (tlv.length >= 2)) {
               if (tlv[tlv.length - 2] == 0x90.toUnsigned(8) &&
                   tlv.last == 0x00.toUnsigned(8)) {
@@ -103,7 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 // byte[] data = Arrays.CopyOf(result, result.Length - 2);
                 Uint8List toParse =
                     Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
-                print(utf8.decode(toParse));
+                print(String.fromCharCodes(toParse));
                 // TODO: parse data
                 showDialog(
                   context: context,
@@ -112,6 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     content: Text('Card data is ${utf8.decode(toParse)}'),
                   ),
                 );
+                break;
               }
             }
           }
