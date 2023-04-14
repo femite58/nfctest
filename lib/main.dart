@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager/platform_tags.dart';
 
+import 'utils.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
@@ -91,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
       Uint8List? res = await isodep?.transceive(data: com);
       print(res);
       if (res != null) {
-        print(String.fromCharCodes([...res].sublist(0, res.length - 2)));
+        print(EmvUtils.decode([...res].sublist(0, res.length - 2)));
         for (int sfi = 1; sfi <= 31; sfi++) {
           for (int record = 1; record <= 16; record++) {
             Uint8List cmd =
@@ -105,16 +107,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 // byte[] data = Arrays.CopyOf(result, result.Length - 2);
                 Uint8List toParse =
                     Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
-                print(String.fromCharCodes(toParse));
-                var p = ASN1Parser(toParse);
-                var s = p.nextObject();
-                print(String.fromCharCodes(s.encodedBytes));
-                // TODO: parse data
+                print(EmvUtils.decode(toParse));
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: const Text('Card'),
-                    content: Text('Card data is ${String.fromCharCodes(toParse)}'),
+                    content: Text(
+                        'Card data is ${json.encode(EmvUtils.decode(toParse))}'),
                   ),
                 );
                 break;
