@@ -810,7 +810,6 @@ class EmvUtils {
       var val = sval;
       while (regex.hasMatch(val)) {
         String tag = regex.firstMatch(val)?[0] as String;
-        frolen += tag.length + 2;
         try {
           var lenhex = val.substring(tag.length, tag.length + 2);
           var len = int.parse('0x$lenhex');
@@ -844,6 +843,7 @@ class EmvUtils {
                 : newVal,
           });
           val = newVal;
+          frolen += tag.length + 2;
         } catch (e) {
           break;
         }
