@@ -89,6 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
         0x10,
         0x00,
       ]);
+      // utf8.encode('2PAY.SYS.DDF01');
       IsoDep? isodep = IsoDep.from(tag);
       Uint8List? res = await isodep?.transceive(data: com);
       print(res);
@@ -96,12 +97,12 @@ class _MyHomePageState extends State<MyHomePage> {
         var dres = EmvUtils.decode([...res].sublist(0, res.length - 2));
         for (var e in dres) {
           // print(e);
-          print(e['description']);
-          print(e['rawValue']);
-          print(e['decodedValue']);
+          print('label: ${e['description']}');
+          print('value: ${e['rawValue']}');
+          print('decoded: ${e['decodedValue']}');
         }
-        for (int sfi = 1; sfi <= 31; sfi++) {
-          for (int record = 1; record <= 16; record++) {
+        for (int sfi = 0; sfi < 31; sfi++) {
+          for (int record = 0; record < 16; record++) {
             Uint8List cmd =
                 Uint8List.fromList([0x00, 0xB2, record, (sfi << 3) | 4, 0x00]);
             Uint8List? tlv = await isodep?.transceive(data: cmd);
@@ -115,9 +116,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
                 for (var t in EmvUtils.decode(toParse)) {
                   // print(t);
-                  print(t['description']);
-                  print(t['rawValue']);
-                  print(t['decodedValue']);
+                  print('label: ${t['description']}');
+                  print('value: ${t['rawValue']}');
+                  print('decoded: ${t['decodedValue']}');
                 }
                 showDialog(
                   context: context,
