@@ -115,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Uint8List toParse =
                     Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
                 for (var t in EmvUtils.decode(toParse)) {
-                  // print(t);
+                  print(t);
                   print('label: ${t['description']}');
                   print('value: ${t['rawValue']}');
                   print('decoded: ${t['decodedValue']}');
