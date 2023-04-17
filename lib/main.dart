@@ -96,11 +96,13 @@ class _MyHomePageState extends State<MyHomePage> {
       if (res != null) {
         var dres = EmvUtils.decode([...res].sublist(0, res.length - 2));
         for (var e in dres) {
-          // print(e);
+          print(e);
           print('label: ${e['description']}');
           print('value: ${e['rawValue']}');
           print('decoded: ${e['decodedValue']}');
         }
+        var gpo = await isodep?.transceive(data: Uint8List.fromList([0x80, 0xA8, 0x00, 0x00, 0x00, 0x00]));
+        print(gpo);
         for (int sfi = 0; sfi < 31; sfi++) {
           for (int record = 0; record < 16; record++) {
             Uint8List cmd =
