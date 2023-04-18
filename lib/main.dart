@@ -135,9 +135,23 @@ class _MyHomePageState extends State<MyHomePage> {
             pdolres = await isodep?.transceive(
                 data: Uint8List.fromList(
                     [0x80, 0xa8, 0x00, 0x00, 0x02, 0x83, 0x00, 0x00]));
-          } else {}
+          } else {
+            var com = EmvUtils.hexToBytes(
+                '8321F02040000000000010000000000010000036000000000000362304180012121212');
+            pdolres = await isodep?.transceive(
+                data: Uint8List.fromList([
+              0x80,
+              0xa8,
+              0x00,
+              0x00,
+              com.length,
+              ...com.map((c) => int.parse(c.toString())).toList(),
+              0x00
+            ]));
+          }
           if (pdolres != null) {
             var dpdolres = EmvUtils.decode(pdolres);
+            print(dpdolres);
             for (var e in dpdolres) {
               print(e);
               print('label: ${e['description']}');
