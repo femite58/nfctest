@@ -79,16 +79,17 @@ class _MyHomePageState extends State<MyHomePage> {
         0xA4,
         0x04,
         0x00,
-        0x07,
+        utf8.encode('2PAY.SYS.DDF01').length,
+        ...utf8.encode('2PAY.SYS.DDF01'),
         // 0x32, 0x50, 0x41, 0x59, 0x2e, 0x53, 0x59, 0x53, 0x2e, 0x44, 0x44, 0x46,
         // 0x30, 0x31,
-        0xA0,
-        0x00,
-        0x00,
-        0x00,
-        0x03,
-        0x10,
-        0x10,
+        // 0xA0,
+        // 0x00,
+        // 0x00,
+        // 0x00,
+        // 0x03,
+        // 0x10,
+        // 0x10,
         0x00,
       ]);
       // utf8.encode('2PAY.SYS.DDF01');
@@ -103,9 +104,34 @@ class _MyHomePageState extends State<MyHomePage> {
           print('value: ${e['rawValue']}');
           print('decoded: ${e['decodedValue']}');
         }
-        var gpo = await isodep?.transceive(
-            data: Uint8List.fromList([0x80, 0xA8, 0x00, 0x00, 0x00, 0x00]));
-        print(gpo);
+        var aidobj = dres.firstWhere((c) => c['tag'].toUpperCase() == '4F');
+        var aid = aidobj['rawValue'];
+        var aidres = await isodep?.transceive(
+            data: Uint8List.fromList([
+          0x00,
+          0xA4,
+          0x04,
+          0x00,
+          EmvUtils.hexToBytes(aid).length,
+          ...EmvUtils.hexToBytes(aid)
+              .map((a) => int.parse(a.toString()))
+              .toList(),
+          0x00
+        ]));
+        if (aidres != null) {
+          print(aidres);
+          var daidres =
+              EmvUtils.decode([...aidres].sublist(0, aidres.length - 2));
+          for (var e in daidres) {
+            print(e);
+            print('label: ${e['description']}');
+            print('value: ${e['rawValue']}');
+            print('decoded: ${e['decodedValue']}');
+          }
+        }
+        // var gpo = await isodep?.transceive(
+        //     data: Uint8List.fromList([0x80, 0xA8, 0x00, 0x00, 0x00, 0x00]));
+        // print(gpo);
         for (int sfi = 0; sfi < 31; sfi++) {
           for (int record = 0; record < 16; record++) {
             Uint8List cmd =

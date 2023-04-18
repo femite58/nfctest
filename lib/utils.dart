@@ -1733,7 +1733,7 @@ class EmvUtils {
   ];
 
   // 70145a0840179541046963575f24032608319f4a0182
-  static decode(dynamic todecode) {
+  static List decode(dynamic todecode) {
     String hex = '';
     if (todecode.runtimeType == String) {
       hex = todecode;
@@ -1768,18 +1768,13 @@ class EmvUtils {
             'ownerTag': decoded.isEmpty
                 ? ''
                 : deccopy.firstWhere(
-                    (d) => d['rawValue'].contains('$tag$lenhex$newVal'), orElse: () => {})['tag'],
+                    (d) => d['rawValue'].contains('$tag$lenhex$newVal'),
+                    orElse: () => {})['tag'],
             'rawValue': newVal,
             'decodedValue': RegExp(r'name|sex|label|language|nationality',
                         caseSensitive: false)
                     .hasMatch(desc)
-                ? () {
-                    List<int> l = [];
-                    for (int i = 0; i < newVal.length; i += 2) {
-                      l.add(int.parse('0x${newVal[i]}${newVal[i + 1]}'));
-                    }
-                    return String.fromCharCodes(Uint8List.fromList(l));
-                  }()
+                ? String.fromCharCodes(hexToBytes(newVal))
                 : desc.contains(
                         RegExp(r'country|currency', caseSensitive: false))
                     ? desc.toLowerCase().contains('currency')
@@ -1809,5 +1804,13 @@ class EmvUtils {
       }
     }
     return decoded;
+  }
+
+  static Uint8List hexToBytes(String hex) {
+    List<int> l = [];
+    for (int i = 0; i < hex.length; i += 2) {
+      l.add(int.parse('0x${hex[i]}${hex[i + 1]}'));
+    }
+    return Uint8List.fromList(l);
   }
 }
