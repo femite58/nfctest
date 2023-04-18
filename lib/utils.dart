@@ -1813,4 +1813,5 @@ class EmvUtils {
     }
     return Uint8List.fromList(l);
   }
+
 }

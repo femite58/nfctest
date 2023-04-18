@@ -128,6 +128,23 @@ class _MyHomePageState extends State<MyHomePage> {
             print('value: ${e['rawValue']}');
             print('decoded: ${e['decodedValue']}');
           }
+          Map pdol = daidres.firstWhere((p) => p['tag'].toUpperCase() == '9F38',
+              orElse: () => {});
+          var pdolres;
+          if (pdol.isEmpty) {
+            pdolres = await isodep?.transceive(
+                data: Uint8List.fromList(
+                    [0x80, 0xa8, 0x00, 0x00, 0x02, 0x83, 0x00, 0x00]));
+          } else {}
+          if (pdolres != null) {
+            var dpdolres = EmvUtils.decode(pdolres);
+            for (var e in dpdolres) {
+              print(e);
+              print('label: ${e['description']}');
+              print('value: ${e['rawValue']}');
+              print('decoded: ${e['decodedValue']}');
+            }
+          }
         }
         // var gpo = await isodep?.transceive(
         //     data: Uint8List.fromList([0x80, 0xA8, 0x00, 0x00, 0x00, 0x00]));
@@ -145,20 +162,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 // byte[] data = Arrays.CopyOf(result, result.Length - 2);
                 Uint8List toParse =
                     Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
+                setState(() {
+                  records.add(TextFormField(
+                    initialValue: json.encode(toParse),
+                  ));
+                });
                 for (var t in EmvUtils.decode(toParse)) {
                   print(t);
                   print('label: ${t['description']}');
                   print('value: ${t['rawValue']}');
                   print('decoded: ${t['decodedValue']}');
                 }
-                showDialog(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Card'),
-                    content: Text(
-                        'Card data is ${json.encode(EmvUtils.decode(toParse))}'),
-                  ),
-                );
                 break;
               }
             }
@@ -171,22 +185,29 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  List<Widget> records = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
+      body: Column(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: !_nfcsupp
-            ? const Text(
-                'Your device do not support nfc or nfc is switched off on this device')
-            : TextButton(
-                onPressed: _tagRead,
-                child: const Text('Scan Card'),
-              ),
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          !_nfcsupp
+              ? const Text(
+                  'Your device do not support nfc or nfc is switched off on this device')
+              : TextButton(
+                  onPressed: _tagRead,
+                  child: const Text('Scan Card'),
+                ),
+          ...records,
+        ],
       ),
     );
   }
