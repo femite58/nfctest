@@ -150,8 +150,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ]));
           }
           if (pdolres != null) {
+            print(pdolres);
             var dpdolres = EmvUtils.decode(pdolres);
-            print(dpdolres);
             for (var e in dpdolres) {
               print(e);
               print('label: ${e['description']}');
