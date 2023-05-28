@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:asn1lib/asn1lib.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager/platform_tags.dart';
 
@@ -81,30 +82,30 @@ class _MyHomePageState extends State<MyHomePage> {
         0x00,
         utf8.encode('2PAY.SYS.DDF01').length,
         ...utf8.encode('2PAY.SYS.DDF01'),
-        // 0x32, 0x50, 0x41, 0x59, 0x2e, 0x53, 0x59, 0x53, 0x2e, 0x44, 0x44, 0x46,
-        // 0x30, 0x31,
-        // 0xA0,
-        // 0x00,
-        // 0x00,
-        // 0x00,
-        // 0x03,
-        // 0x10,
-        // 0x10,
         0x00,
       ]);
-      // utf8.encode('2PAY.SYS.DDF01');
+
       IsoDep? isodep = IsoDep.from(tag);
+      // NdefMessage? ndef = await Ndef.from(tag)?.read();
+      // ndef?.records.first.identifier;
       Uint8List? res = await isodep?.transceive(data: com);
       print(res);
       if (res != null) {
         var dres = EmvUtils.decode([...res].sublist(0, res.length - 2));
+        records.add(TextFormField(
+            initialValue: json.encode(EmvUtils.bytesToHex(
+          [...res].sublist(0, res.length - 2),
+        ))));
+        records.add(TextFormField(
+          initialValue: json.encode(dres),
+        ));
         for (var e in dres) {
           print(e);
-          print('label: ${e['description']}');
+          print('label: ${e['name']}');
           print('value: ${e['rawValue']}');
           print('decoded: ${e['decodedValue']}');
         }
-        var aidobj = dres.firstWhere((c) => c['tag'].toUpperCase() == '4F');
+        var aidobj = dres.firstWhere((c) => c['tag'] == '4F');
         var aid = aidobj['rawValue'];
         var aidres = await isodep?.transceive(
             data: Uint8List.fromList([
@@ -113,89 +114,126 @@ class _MyHomePageState extends State<MyHomePage> {
           0x04,
           0x00,
           EmvUtils.hexToBytes(aid).length,
-          ...EmvUtils.hexToBytes(aid)
-              .map((a) => int.parse(a.toString()))
-              .toList(),
+          ...EmvUtils.hexToBytes(aid),
           0x00
         ]));
         if (aidres != null) {
           print(aidres);
           var daidres =
               EmvUtils.decode([...aidres].sublist(0, aidres.length - 2));
+          records.add(TextFormField(
+              initialValue: json.encode(EmvUtils.bytesToHex(
+            [...aidres].sublist(0, aidres.length - 2),
+          ))));
+          records.add(TextFormField(
+            initialValue: json.encode(daidres),
+          ));
           for (var e in daidres) {
             print(e);
-            print('label: ${e['description']}');
+            print('label: ${e['name']}');
             print('value: ${e['rawValue']}');
             print('decoded: ${e['decodedValue']}');
           }
-          Map pdol = daidres.firstWhere((p) => p['tag'].toUpperCase() == '9F38',
-              orElse: () => {});
+          Map pdol =
+              daidres.firstWhere((p) => p['tag'] == '9F38', orElse: () => {});
           var pdolres;
           if (pdol.isEmpty) {
             pdolres = await isodep?.transceive(
                 data: Uint8List.fromList(
                     [0x80, 0xa8, 0x00, 0x00, 0x02, 0x83, 0x00, 0x00]));
           } else {
-            var com = EmvUtils.hexToBytes(
-                '8321F02040000000000010000000000010000036000000000000362304180012121212');
+            var com = EmvUtils.genPDOLCommand(
+                pdol['rawValue'], 1.0)['gpoCommandList'];
             pdolres = await isodep?.transceive(
-                data: Uint8List.fromList([
-              0x80,
-              0xa8,
-              0x00,
-              0x00,
-              com.length,
-              ...com.map((c) => int.parse(c.toString())).toList(),
-              0x00
-            ]));
+                data: Uint8List.fromList(
+                    [0x80, 0xa8, 0x00, 0x00, com.length, ...com, 0x00]));
           }
           if (pdolres != null) {
             print(pdolres);
-            var dpdolres = EmvUtils.decode(pdolres);
+            var dpdolres =
+                EmvUtils.decode([...pdolres].sublist(0, pdolres.length - 2));
+            records.add(TextFormField(
+                initialValue: json.encode(EmvUtils.bytesToHex(
+              [...pdolres].sublist(0, pdolres.length - 2),
+            ))));
+            records.add(TextFormField(
+              initialValue: json.encode(dpdolres),
+            ));
             for (var e in dpdolres) {
               print(e);
-              print('label: ${e['description']}');
+              print('label: ${e['name']}');
               print('value: ${e['rawValue']}');
               print('decoded: ${e['decodedValue']}');
             }
-          }
-        }
-        // var gpo = await isodep?.transceive(
-        //     data: Uint8List.fromList([0x80, 0xA8, 0x00, 0x00, 0x00, 0x00]));
-        // print(gpo);
-        for (int sfi = 0; sfi < 31; sfi++) {
-          for (int record = 0; record < 16; record++) {
-            Uint8List cmd =
-                Uint8List.fromList([0x00, 0xB2, record, (sfi << 3) | 4, 0x00]);
-            Uint8List? tlv = await isodep?.transceive(data: cmd);
-            print(tlv);
-            if ((tlv != null) && (tlv.length >= 2)) {
-              if (tlv[tlv.length - 2] == 0x90.toUnsigned(8) &&
-                  tlv.last == 0x00.toUnsigned(8)) {
-                // file exists and contains data
-                // byte[] data = Arrays.CopyOf(result, result.Length - 2);
-                Uint8List toParse =
-                    Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
-                setState(() {
-                  records.add(TextFormField(
-                    initialValue: json.encode(toParse),
-                  ));
-                });
-                for (var t in EmvUtils.decode(toParse)) {
-                  print(t);
-                  print('label: ${t['description']}');
-                  print('value: ${t['rawValue']}');
-                  print('decoded: ${t['decodedValue']}');
+            String afl =
+                dpdolres.firstWhere((d) => d['tag'] == '94')['rawValue'];
+            for (int i = 0; i < afl.length; i += 8) {
+              var sfi = (int.parse('0x${afl.substring(0, 2)}') >> 3) << 3 | 4;
+              var rec1 = int.parse('0x${afl.substring(2, 4)}');
+              var recl = int.parse('0x${afl.substring(4, 6)}');
+              for (int j = rec1; j <= recl; j++) {
+                Uint8List? recRes = await isodep?.transceive(
+                    data: Uint8List.fromList([
+                  0x00,
+                  0xB2,
+                  j,
+                  sfi,
+                  0,
+                ]));
+                if (recRes != null) {
+                  var dtoParse = EmvUtils.decode(
+                      [...recRes].sublist(0, recRes.length - 2));
+                  setState(() {
+                    records.add(TextFormField(
+                        initialValue: json.encode(EmvUtils.bytesToHex(
+                      [...recRes].sublist(0, recRes.length - 2),
+                    ))));
+                    records.add(TextFormField(
+                      initialValue: json.encode(dtoParse),
+                    ));
+                  });
                 }
-                break;
               }
             }
           }
         }
+        // for (int sfi = 0; sfi < 31; sfi++) {
+        //   for (int record = 0; record < 16; record++) {
+        //     Uint8List cmd =
+        //         Uint8List.fromList([0x00, 0xB2, record, (sfi << 3) | 4, 0x00]);
+        //     Uint8List? tlv = await isodep?.transceive(data: cmd);
+        //     print(tlv);
+        //     if ((tlv != null) && (tlv.length >= 2)) {
+        //       if (tlv[tlv.length - 2] == 0x90.toUnsigned(8) &&
+        //           tlv.last == 0x00.toUnsigned(8)) {
+        //         // file exists and contains data
+        //         // byte[] data = Arrays.CopyOf(result, result.Length - 2);
+        //         Uint8List toParse =
+        //             Uint8List.fromList([...tlv].sublist(0, tlv.length - 2));
+        //         var dtoParse = EmvUtils.decode(toParse);
+        //         setState(() {
+        //           records.add(TextFormField(
+        //               initialValue: json.encode(EmvUtils.bytesToHex(
+        //             toParse,
+        //           ))));
+        //           records.add(TextFormField(
+        //             initialValue: json.encode(dtoParse),
+        //           ));
+        //         });
+        //         for (var t in dtoParse) {
+        //           print(t);
+        //           print('label: ${t['name']}');
+        //           print('value: ${t['rawValue']}');
+        //           print('decoded: ${t['decodedValue']}');
+        //         }
+        //         break;
+        //       }
+        //     }
+        //   }
+        // }
       }
-
-      // MifareClassic.from(tag)
-      NfcManager.instance.stopSession();
+      print('done');
+      await NfcManager.instance.stopSession();
     });
   }
 
@@ -207,21 +245,23 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Column(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          !_nfcsupp
-              ? const Text(
-                  'Your device do not support nfc or nfc is switched off on this device')
-              : TextButton(
-                  onPressed: _tagRead,
-                  child: const Text('Scan Card'),
-                ),
-          ...records,
-        ],
+      body: SingleChildScrollView(
+        child: Column(
+          // Center is a layout widget. It takes a single child and positions it
+          // in the middle of the parent.
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            !_nfcsupp
+                ? const Text(
+                    'Your device do not support nfc or nfc is switched off on this device')
+                : TextButton(
+                    onPressed: _tagRead,
+                    child: const Text('Scan Card'),
+                  ),
+            ...records,
+          ],
+        ),
       ),
     );
   }
