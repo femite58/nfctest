@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:nfc_manager/platform_tags.dart';
+import 'package:nfctest/theme.dart';
 
 import 'custom_button.dart';
 import 'form_group.dart';
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'NFC Tap to Pay',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -40,7 +41,8 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'NFC Tap to Pay'),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -498,7 +500,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(widget.title),backgroundColor: AppTheme.appColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(15),
