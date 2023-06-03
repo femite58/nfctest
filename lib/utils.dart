@@ -145,7 +145,9 @@ class EmvUtils {
     int tag;
     int length;
     var iccData = [];
+    print(pdolval);
     List codeArr = hexToBytes(pdolval);
+    print(codeArr);
     updateResp(ptag, len, comm) {
       retRes += comm;
       iccData.add({'tag': ptag, 'lenHex': len, 'rawValue': comm});
@@ -222,6 +224,8 @@ class EmvUtils {
         updateResp(hexTag, lenhex, 'C08000');
       }
     }
+    print(retRes.length);
+    print(retRes);
     var finalHexCom =
         '83${(retRes.length / 2).toInt().toRadixString(16).padLeft(2, '0')}$retRes';
     return {
@@ -400,7 +404,8 @@ class EmvUtils {
   static String comToHex(List comarr) {
     return comarr
         .map((c) => int.parse(c.map((o) => o['value']).join(''), radix: 2)
-            .toRadixString(16))
+            .toRadixString(16)
+            .padLeft(2, '0'))
         .join('');
   }
 

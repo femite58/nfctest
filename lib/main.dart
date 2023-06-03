@@ -174,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ));
             } else {
               var dcom = EmvUtils.genPDOLCommand(
-                  pdol['rawValue'], double.parse(amount))['gpoCommandList'];
+                  pdol['rawValue'], double.parse(amount));
               var com = dcom['gpoCommandList'];
               totalDecoded.addAll(dcom['iccData']);
               pdolres = await isodep?.transceive(
@@ -182,7 +182,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       [0x80, 0xa8, 0x00, 0x00, com.length, ...com, 0x00]));
             }
             if (pdolres != null) {
-              // print(pdolres);
+              print(pdolres);
               records.add(TextFormField(
                 initialValue: json.encode(EmvUtils.bytesToHex(pdolres)),
               ));
@@ -258,11 +258,11 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         }
         var iccData = EmvUtils.genICCData(totalDecoded);
-        var pan = totalDecoded.firstWhere((t) => t['tag'] == '5A')['rawValue'];
-        var expiry =
-            totalDecoded.firstWhere((t) => t['tag'] == '5F24')['rawValue'];
+        print(iccData);
         var track2D =
             totalDecoded.firstWhere((t) => t['tag'] == '57')['rawValue'];
+        var pan = track2D.split('d')[0];
+        var expiry = track2D.split('d')[1].substring(0, 6);
         onDone({
           'icc_data': iccData,
           'pan': pan,
@@ -392,20 +392,21 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
     print(_data);
-    print(json.decode(res.body));
+    var resd = json.decode(res.body);
+    print(resd);
     setState(() {
       _submitting = false;
     });
-    if (json.decode(res.body)['success']) {
+    // if (json.decode(res.body)['success']) {
       // ignore: use_build_context_synchronously
       showDialog(
         context: context,
-        builder: (_) => const AlertDialog(
-          title: Text('Success'),
-          content: Text('Payment was processed successfully'),
+        builder: (_) => AlertDialog(
+          title: Text(resd['success'] ? 'Success' : 'Error'),
+          content: Text(resd['success'] ? 'Payment was processed successfully' : resd['message']),
         ),
       );
-    }
+    // }
   }
 
   @override
