@@ -81,7 +81,9 @@ class _MyHomePageState extends State<MyHomePage> {
           body: json.encode({'terminalId': '2035BOU6'}),
           headers: {'Content-Type': 'application/json'});
       setState(() {
-        _sessionId = json.decode(res.body)['data']['session_id'];
+        try {
+          _sessionId = json.decode(res.body)['data']['session_id'];
+        } catch (e) {}
         print(_sessionId);
       });
     }();
@@ -98,45 +100,55 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _tagRead(amount, {onDone}) {
     NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
-      try {
-        Uint8List com = Uint8List.fromList([
-          0x00,
-          0xA4,
-          0x04,
-          0x00,
-          utf8.encode('2PAY.SYS.DDF01').length,
-          ...utf8.encode('2PAY.SYS.DDF01'),
-          0x00,
-        ]);
-        var commHex = EmvUtils.bytesToHex([
-          0x00,
-          0xA4,
-          0x04,
-          0x00,
-          utf8.encode('2PAY.SYS.DDF01').length,
-          ...utf8.encode('2PAY.SYS.DDF01'),
-          0x00,
-        ]);
-        records.add(TextFormField(
-          initialValue: json.encode(commHex),
-        ));
+      // try {
+      Uint8List com = Uint8List.fromList([
+        0x00,
+        0xA4,
+        0x04,
+        0x00,
+        utf8.encode('2PAY.SYS.DDF01').length,
+        ...utf8.encode('2PAY.SYS.DDF01'),
+        0x00,
+      ]);
+      var commHex = EmvUtils.bytesToHex([
+        0x00,
+        0xA4,
+        0x04,
+        0x00,
+        utf8.encode('2PAY.SYS.DDF01').length,
+        ...utf8.encode('2PAY.SYS.DDF01'),
+        0x00,
+      ]);
+      records.add(TextFormField(
+        initialValue: json.encode(commHex),
+      ));
 
-        IsoDep? isodep = IsoDep.from(tag);
-        // NdefMessage? ndef = await Ndef.from(tag)?.read();
-        // ndef?.records.first.identifier;
-        var totalDecoded = [];
-        Uint8List? res = await isodep?.transceive(data: com);
-        // print(res);
-        if (res != null) {
-          records.add(TextFormField(
-            initialValue: json.encode(EmvUtils.bytesToHex(res)),
-          ));
-          var dres = EmvUtils.decode([...res].sublist(0, res.length - 2));
-          totalDecoded.addAll(dres);
-          var aidobj = dres.firstWhere((c) => c['tag'] == '4F');
-          var aid = aidobj['rawValue'];
-          var aidres = await isodep?.transceive(
-              data: Uint8List.fromList([
+      IsoDep? isodep = IsoDep.from(tag);
+      // NdefMessage? ndef = await Ndef.from(tag)?.read();
+      // ndef?.records.first.identifier;
+      var totalDecoded = [];
+      Uint8List? res = await isodep?.transceive(data: com);
+      // print(res);
+      if (res != null) {
+        records.add(TextFormField(
+          initialValue: json.encode(EmvUtils.bytesToHex(res)),
+        ));
+        var dres = EmvUtils.decode([...res].sublist(0, res.length - 2));
+        totalDecoded.addAll(dres);
+        var aidobj = dres.firstWhere((c) => c['tag'] == '4F');
+        var aid = aidobj['rawValue'];
+        var aidres = await isodep?.transceive(
+            data: Uint8List.fromList([
+          0x00,
+          0xA4,
+          0x04,
+          0x00,
+          EmvUtils.hexToBytes(aid).length,
+          ...EmvUtils.hexToBytes(aid),
+          0x00
+        ]));
+        records.add(TextFormField(
+          initialValue: json.encode(EmvUtils.bytesToHex([
             0x00,
             0xA4,
             0x04,
@@ -144,141 +156,133 @@ class _MyHomePageState extends State<MyHomePage> {
             EmvUtils.hexToBytes(aid).length,
             ...EmvUtils.hexToBytes(aid),
             0x00
-          ]));
+          ])),
+        ));
+        if (aidres != null) {
           records.add(TextFormField(
-            initialValue: json.encode(EmvUtils.bytesToHex([
-              0x00,
-              0xA4,
-              0x04,
-              0x00,
-              EmvUtils.hexToBytes(aid).length,
-              ...EmvUtils.hexToBytes(aid),
-              0x00
-            ])),
+            initialValue: json.encode(EmvUtils.bytesToHex(aidres)),
           ));
-          if (aidres != null) {
+          var daidres =
+              EmvUtils.decode([...aidres].sublist(0, aidres.length - 2));
+          totalDecoded.addAll(daidres);
+          Map pdol =
+              daidres.firstWhere((p) => p['tag'] == '9F38', orElse: () => {});
+          var pdolres;
+          if (pdol.isEmpty) {
+            pdolres = await isodep?.transceive(
+                data: Uint8List.fromList(
+                    [0x80, 0xa8, 0x00, 0x00, 0x02, 0x83, 0x00, 0x00]));
             records.add(TextFormField(
-              initialValue: json.encode(EmvUtils.bytesToHex(aidres)),
+              initialValue: json.encode(EmvUtils.bytesToHex(
+                  [0x80, 0xa8, 0x00, 0x00, 0x02, 0x83, 0x00, 0x00])),
             ));
-            var daidres =
-                EmvUtils.decode([...aidres].sublist(0, aidres.length - 2));
-            totalDecoded.addAll(daidres);
-            Map pdol =
-                daidres.firstWhere((p) => p['tag'] == '9F38', orElse: () => {});
-            var pdolres;
+          } else {
+            var dcom =
+                EmvUtils.genPDOLCommand(pdol['rawValue'], double.parse(amount));
+            var com = dcom['gpoCommandList'];
+            totalDecoded.addAll(dcom['iccData']);
+            pdolres = await isodep?.transceive(
+                data: Uint8List.fromList(
+                    [0x80, 0xa8, 0x00, 0x00, com.length, ...com, 0x00]));
+          }
+          if (pdolres != null) {
+            print(pdolres);
+            records.add(TextFormField(
+              initialValue: json.encode(EmvUtils.bytesToHex(pdolres)),
+            ));
+            var dpdolres =
+                EmvUtils.decode([...pdolres].sublist(0, pdolres.length - 2));
+            totalDecoded.addAll(dpdolres);
+            String afl =
+                dpdolres.firstWhere((d) => d['tag'] == '94')['rawValue'];
+            print(afl);
+            for (int i = 0; i < afl.length; i += 8) {
+              var eafl = afl.substring(i, i + 8);
+              print(eafl.substring(0, 2));
+              var sfi = (int.parse('0x${eafl.substring(0, 2)}') >> 3) << 3 | 4;
+              var rec1 = int.parse('0x${eafl.substring(2, 4)}');
+              var recl = int.parse('0x${eafl.substring(4, 6)}');
+              for (int j = rec1; j <= recl; j++) {
+                Uint8List? recRes = await isodep?.transceive(
+                    data: Uint8List.fromList([
+                  0x00,
+                  0xB2,
+                  j,
+                  sfi,
+                  0,
+                ]));
+                records.add(TextFormField(
+                    initialValue: json.encode(EmvUtils.bytesToHex([
+                  0x00,
+                  0xB2,
+                  j,
+                  sfi,
+                  0,
+                ]))));
+                if (recRes != null) {
+                  var dtoParse = EmvUtils.decode(
+                      [...recRes].sublist(0, recRes.length - 2));
+                  totalDecoded.addAll(dtoParse);
+                }
+              }
+            }
             if (pdol.isEmpty) {
-              pdolres = await isodep?.transceive(
-                  data: Uint8List.fromList(
-                      [0x80, 0xa8, 0x00, 0x00, 0x02, 0x83, 0x00, 0x00]));
-              records.add(TextFormField(
-                initialValue: json.encode(EmvUtils.bytesToHex(
-                    [0x80, 0xa8, 0x00, 0x00, 0x02, 0x83, 0x00, 0x00])),
-              ));
-            } else {
-              var dcom = EmvUtils.genPDOLCommand(
-                  pdol['rawValue'], double.parse(amount));
-              var com = dcom['gpoCommandList'];
+              var cdol = totalDecoded.firstWhere((t) => t['tag'] == '8C',
+                  orElse: () => {})['rawValue'];
+              print(cdol);
+
+              var dcom = EmvUtils.genCDOLCommand(cdol, double.parse(amount));
+              // } else {
+              //   cdol = totalDecoded
+              //       .firstWhere((t) => t['tag'] == '9F49')['rawValue'];
+              //   dcom = EmvUtils.genDDOLCommand(cdol, double.parse(amount));
+              // }
+              var com = dcom['commandList'];
+              print(dcom);
               totalDecoded.addAll(dcom['iccData']);
-              pdolres = await isodep?.transceive(
+              var cdolres = await isodep?.transceive(
                   data: Uint8List.fromList(
-                      [0x80, 0xa8, 0x00, 0x00, com.length, ...com, 0x00]));
-            }
-            if (pdolres != null) {
-              print(pdolres);
-              records.add(TextFormField(
-                initialValue: json.encode(EmvUtils.bytesToHex(pdolres)),
-              ));
-              var dpdolres =
-                  EmvUtils.decode([...pdolres].sublist(0, pdolres.length - 2));
-              totalDecoded.addAll(dpdolres);
-              String afl =
-                  dpdolres.firstWhere((d) => d['tag'] == '94')['rawValue'];
-              print(afl);
-              for (int i = 0; i <= afl.length / 2; i += 8) {
-                var eafl = afl.substring(i, i + 8);
-                print(eafl.substring(0, 2));
-                var sfi =
-                    (int.parse('0x${eafl.substring(0, 2)}') >> 3) << 3 | 4;
-                var rec1 = int.parse('0x${eafl.substring(2, 4)}');
-                var recl = int.parse('0x${eafl.substring(4, 6)}');
-                for (int j = rec1; j <= recl; j++) {
-                  Uint8List? recRes = await isodep?.transceive(
-                      data: Uint8List.fromList([
-                    0x00,
-                    0xB2,
-                    j,
-                    sfi,
-                    0,
-                  ]));
-                  records.add(TextFormField(
-                      initialValue: json.encode(EmvUtils.bytesToHex([
-                    0x00,
-                    0xB2,
-                    j,
-                    sfi,
-                    0,
-                  ]))));
-                  if (recRes != null) {
-                    var dtoParse = EmvUtils.decode(
-                        [...recRes].sublist(0, recRes.length - 2));
-                    totalDecoded.addAll(dtoParse);
-                  }
-                }
-              }
-              if (pdol.isEmpty) {
-                var cdol = totalDecoded
-                    .firstWhere((t) => t['tag'] == '8C')['rawValue'];
-                var dcom = EmvUtils.genCDOLCommand(cdol, double.parse(amount));
-                var com = dcom['commandList'];
-                totalDecoded.addAll(dcom['iccData']);
-                var cdolres = await isodep?.transceive(
-                    data: Uint8List.fromList(
-                        [0x80, 0xae, 0x00, 0x00, com.length, ...com, 0x00]));
-                setState(() {
-                  records.add(TextFormField(
-                      initialValue: json.encode(EmvUtils.bytesToHex([
-                    0x80,
-                    0xae,
-                    0x00,
-                    0x00,
-                    com.length,
-                    ...com,
-                    0x00
-                  ]))));
-                });
-                if (cdolres != null) {
-                  var dcdolres = EmvUtils.decode(
-                      [...cdolres].sublist(0, cdolres.length - 2));
-                  totalDecoded.addAll(dcdolres);
-                }
-              }
-              var iccData = EmvUtils.genICCData(totalDecoded);
+                      [0x80, 0xae, 0x00, 0x00, com.length, ...com, 0x00]));
+              print(cdolres);
+              print([0x80, 0xae, 0x00, 0x00, com.length, ...com, 0x00]);
               setState(() {
-                records.add(TextFormField(initialValue: iccData));
+                records.add(TextFormField(
+                    initialValue: json.encode(EmvUtils.bytesToHex(
+                        [0x80, 0xae, 0x00, 0x00, com.length, ...com, 0x00]))));
               });
+              if (cdolres != null) {
+                var dcdolres = EmvUtils.decode(
+                    [...cdolres].sublist(0, cdolres.length - 2));
+                totalDecoded.addAll(dcdolres);
+              }
             }
+            var iccData = EmvUtils.genICCData(totalDecoded);
+            setState(() {
+              records.add(TextFormField(initialValue: iccData));
+            });
           }
         }
-        var iccData = EmvUtils.genICCData(totalDecoded);
-        print(iccData);
-        var track2D =
-            totalDecoded.firstWhere((t) => t['tag'] == '57')['rawValue'];
-        var pan = track2D.split('d')[0];
-        var expiry = track2D.split('d')[1].substring(0, 6);
-        onDone({
-          'icc_data': iccData,
-          'pan': pan,
-          'expiry_date': expiry,
-          'track2_data': track2D.toUpperCase(),
-          'all_info': EmvUtils.simplifyTotalDecoded(totalDecoded),
-        });
-        // print('done');
-        await NfcManager.instance.stopSession();
-      } catch (e) {
-        print(e);
-        await NfcManager.instance.stopSession();
-        _tagRead(amount, onDone: onDone);
       }
+      var iccData = EmvUtils.genICCData(totalDecoded);
+      print(iccData);
+      var track2D =
+          totalDecoded.firstWhere((t) => t['tag'] == '57')['rawValue'];
+      var pan = track2D.split('d')[0];
+      var expiry = track2D.split('d')[1].substring(0, 6);
+      onDone({
+        'icc_data': iccData,
+        'pan': pan,
+        'expiry_date': expiry,
+        'track2_data': track2D.toUpperCase(),
+        'all_info': EmvUtils.simplifyTotalDecoded(totalDecoded),
+      });
+      // print('done');
+      await NfcManager.instance.stopSession();
+      // } catch (e) {
+      //   print(e);
+      //   await NfcManager.instance.stopSession();
+      //   _tagRead(amount, onDone: onDone);
+      // }
     });
   }
 
@@ -400,14 +404,16 @@ class _MyHomePageState extends State<MyHomePage> {
       _submitting = false;
     });
     // if (json.decode(res.body)['success']) {
-      // ignore: use_build_context_synchronously
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text(resd['success'] ? 'Success' : 'Error'),
-          content: Text(resd['success'] ? 'Payment was processed successfully' : resd['message']),
-        ),
-      );
+    // ignore: use_build_context_synchronously
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(resd['success'] ? 'Success' : 'Error'),
+        content: Text(resd['success']
+            ? 'Payment was processed successfully'
+            : resd['message']),
+      ),
+    );
     // }
   }
 
@@ -500,7 +506,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),backgroundColor: AppTheme.appColor,
+        title: Text(widget.title),
+        backgroundColor: AppTheme.appColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(15),

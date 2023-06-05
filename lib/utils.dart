@@ -334,6 +334,198 @@ class EmvUtils {
     };
   }
 
+  // static Map genDDOLCommand(String pdolval, double amnt) {
+  //   var retRes = '';
+  //   int offset = 0;
+  //   int tag;
+  //   int length;
+  //   var iccData = [];
+  //   List codeArr = hexToBytes(pdolval);
+  //   updateResp(ptag, len, comm, {static = false}) {
+  //     if (!static) {
+  //       retRes += comm;
+  //     }
+  //     iccData.add({'tag': ptag, 'lenHex': len, 'rawValue': comm});
+  //   }
+
+  //   while (offset < codeArr.length) {
+  //     tag = codeArr[offset++];
+  //     if ((tag & 0x1F) == 0x1F) {
+  //       tag = (tag << 8) | codeArr[offset++];
+  //     }
+
+  //     length = codeArr[offset++];
+  //     if (length == 0x81) {
+  //       length = codeArr[offset++];
+  //     }
+
+  //     // value = codeArr.sublist(offset, offset + length);
+  //     // offset++;
+  //     String hexTag = tag.toRadixString(16).toUpperCase().padLeft(2, '0');
+  //     String lenhex = length.toRadixString(16).toUpperCase().padLeft(2, '0');
+  //     // print(hexTag);
+  //     if (hexTag == '9F02') {
+  //       updateResp(
+  //           hexTag,
+  //           lenhex,
+  //           (num.parse(amnt.toStringAsFixed(2)) * 100)
+  //               .toString()
+  //               .replaceAll(RegExp(r'\.\d+'), '')
+  //               .padLeft(12, '0'));
+  //     } else if (hexTag == '9F03') {
+  //       updateResp(hexTag, lenhex, '000000000000');
+  //     } else if (hexTag == '9F1A') {
+  //       updateResp(
+  //           hexTag,
+  //           lenhex,
+  //           countryCodes
+  //               .firstWhere((c) => c['name'] == 'Nigeria')['code']
+  //               .padLeft(4, '0'));
+  //     } else if (hexTag == '95') {
+  //       updateResp(hexTag, lenhex, '0000000000');
+  //     } else if (hexTag == '5F2A') {
+  //       updateResp(
+  //           hexTag,
+  //           lenhex,
+  //           currencies
+  //               .firstWhere((c) => c['code'] == 'NGN')['number']
+  //               .padLeft(4, '0'));
+  //     } else if (hexTag == '9A') {
+  //       var now = DateTime.now();
+  //       var comm =
+  //           '${now.year.toString().substring(2)}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+  //       updateResp(hexTag, lenhex, comm);
+  //     } else if (hexTag == '9F21') {
+  //       var now = DateTime.now();
+  //       var comm =
+  //           '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+  //       updateResp(hexTag, lenhex, comm);
+  //     } else if (hexTag == '9C') {
+  //       updateResp(hexTag, lenhex, '00');
+  //     } else if (hexTag == '9F35') {
+  //       updateResp(hexTag, lenhex, '22');
+  //     } else if (hexTag == '9F37') {
+  //       updateResp(hexTag, lenhex, genRandHex(8));
+  //     } else if (hexTag == '9F33') {
+  //       // updateResp(hexTag, lenhex, 'E0A000');
+  //       updateResp(hexTag, lenhex, 'E0F8C8');
+  //     } else if (hexTag == '9F40') {
+  //       updateResp(hexTag, lenhex, '8e00b05005');
+  //     } else if (hexTag == '9F5C') {
+  //       updateResp(hexTag, lenhex, '7A45123EE59C7F40');
+  //     } else if (hexTag == '9F58') {
+  //       updateResp(hexTag, lenhex, '01');
+  //     } else if (hexTag == '9F59') {
+  //       updateResp(hexTag, lenhex, 'C08000');
+  //     } else if (hexTag == '9F34') {
+  //       updateResp(hexTag, lenhex, '1F0302');
+  //     } else if (hexTag == '9F7C') {
+  //       updateResp(hexTag, lenhex, '0'.padLeft(40, '0'));
+  //     } else if (hexTag == '9F45') {
+  //       updateResp(hexTag, lenhex, '0000');
+  //     } else if (hexTag == '9F4C') {
+  //       updateResp(hexTag, lenhex, '0'.padLeft(16, '0'));
+  //     }
+  //   }
+  //   var exist = iccData.firstWhere((t) => t['tag'] == '9F02', orElse: () => {});
+  //   if (exist.isEmpty) {
+  //     for (var hexTag in [
+  //       '9F02',
+  //       '9F03',
+  //       '9C',
+  //       '9F35',
+  //       '9A',
+  //       '5F2A',
+  //       '95',
+  //       '9F1A'
+  //     ]) {
+  //       if (hexTag == '9F02') {
+  //         updateResp(
+  //           hexTag,
+  //           '06',
+  //           (num.parse(amnt.toStringAsFixed(2)) * 100)
+  //               .toString()
+  //               .replaceAll(RegExp(r'\.\d+'), '')
+  //               .padLeft(12, '0'),
+  //           static: true,
+  //         );
+  //       } else if (hexTag == '9F03') {
+  //         updateResp(
+  //           hexTag,
+  //           '06',
+  //           '000000000000',
+  //           static: true,
+  //         );
+  //       } else if (hexTag == '9F1A') {
+  //         updateResp(
+  //           hexTag,
+  //           '02',
+  //           countryCodes
+  //               .firstWhere((c) => c['name'] == 'Nigeria')['code']
+  //               .padLeft(4, '0'),
+  //           static: true,
+  //         );
+  //       } else if (hexTag == '95') {
+  //         updateResp(
+  //           hexTag,
+  //           '05',
+  //           '0000000000',
+  //           static: true,
+  //         );
+  //       } else if (hexTag == '5F2A') {
+  //         updateResp(
+  //           hexTag,
+  //           '02',
+  //           currencies
+  //               .firstWhere((c) => c['code'] == 'NGN')['number']
+  //               .padLeft(4, '0'),
+  //           static: true,
+  //         );
+  //       } else if (hexTag == '9A') {
+  //         var now = DateTime.now();
+  //         var comm =
+  //             '${now.year.toString().substring(2)}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+  //         updateResp(
+  //           hexTag,
+  //           '03',
+  //           comm,
+  //           static: true,
+  //         );
+  //       } else if (hexTag == '9F21') {
+  //         var now = DateTime.now();
+  //         var comm =
+  //             '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+  //         updateResp(
+  //           hexTag,
+  //           '03',
+  //           comm,
+  //           static: true,
+  //         );
+  //       } else if (hexTag == '9C') {
+  //         updateResp(
+  //           hexTag,
+  //           '01',
+  //           '00',
+  //           static: true,
+  //         );
+  //       } else if (hexTag == '9F35') {
+  //         updateResp(
+  //           hexTag,
+  //           '01',
+  //           '22',
+  //           static: true,
+  //         );
+  //       }
+  //     }
+  //   }
+  //   var finalHexCom = retRes;
+  //   return {
+  //     'command': finalHexCom,
+  //     'commandList': hexToBytes(finalHexCom),
+  //     'iccData': iccData
+  //   };
+  // }
+
   static String genRandHex(n) {
     var hex = '1234567890ABCDEF';
     var ret = '';
