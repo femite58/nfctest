@@ -72,6 +72,10 @@ class _MyHomePageState extends State<MyHomePage> {
     //     pinblock, 'f8141fa4-5905-4493-95ce-cc365d65');
     // print(pinblock);
     // print(encpinblock);
+    // var res = EmvUtils.decode('6f568407a0000000041010a54b50104465626974204d6173746572636172649f12104465626974204d6173746572636172649f1101018701015f2d04656e6672bf0c155f56034e47419f4d020b0a9f6e0705660000303000');
+    // for (var r in res) {
+    //   print(r);
+    // }
     () async {
       var res = await http.post(
           Uri.parse('http://aarapi.bellmonie.com/api/v1/auth/terminal-sign'),
@@ -542,9 +546,9 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Padding(
         padding: const EdgeInsets.all(15),
         child: _scanning
-            ? PageLoader(
+            ? const PageLoader(
                 'Place your card behind your phone to scan',
-                items: records,
+                // items: records,
               )
             : Column(
                 // Center is a layout widget. It takes a single child and positions it

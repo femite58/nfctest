@@ -65,6 +65,7 @@ class EmvUtils {
         var newVal = tagInfo['value']
             .map((v) => v.toRadixString(16).padLeft(2, '0'))
             .join('');
+        print(tagInfo);
 
         var tagobj =
             emvTags.firstWhere((e) => e['tag'] == hexTag, orElse: () => {});
@@ -96,9 +97,12 @@ class EmvUtils {
                           return '${match['name']} (${match['code']})';
                         }()
                       : () {
-                          return countryCodes.firstWhere((c) =>
-                              int.parse(c['code']) ==
-                              int.parse(newVal))['name'];
+                          if (newVal.length == 4) {
+                            return countryCodes.firstWhere((c) =>
+                                int.parse(c['code']) ==
+                                int.parse(newVal))['name'];
+                          }
+                          return hexToBytes(newVal).map((h) => String.fromCharCodes([h])).join('');
                         }()
                   : newVal,
         });
