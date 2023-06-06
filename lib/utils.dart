@@ -5,13 +5,8 @@ import 'dart:typed_data';
 // import 'package:crypto/crypto.dart';
 
 import 'package:pointycastle/api.dart';
-import 'package:pointycastle/block/aes_fast.dart';
-import 'package:pointycastle/block/modes/ecb.dart';
-import 'package:pointycastle/padded_block_cipher/padded_block_cipher_impl.dart';
-import 'package:pointycastle/paddings/pkcs7.dart';
 
 import 'constants.dart';
-import 'package:dart_des/dart_des.dart';
 
 class EmvUtils {
   static const List emvTags = EMVTAGS;
