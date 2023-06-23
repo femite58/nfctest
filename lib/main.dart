@@ -200,7 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
               totalDecoded.addAll(dcom['iccData']);
               pdolres = await isodep?.transceive(
                   data: Uint8List.fromList(
-                      [0x80, 0xa8, 0x00, 0x00, com.length, ...com, 0x00]));
+                      [0x80, 0xa8, 0x80, 0x00, com.length, ...com, 0x00]));
             }
             if (pdolres != null) {
               print(pdolres);
